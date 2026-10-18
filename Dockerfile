@@ -1,7 +1,3 @@
-
-
-
-<Down># Етап 1: Збірка (Builder)
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 COPY pom.xml .
@@ -11,6 +7,14 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+COPY --from=builder --chown=appuser:appgroup /app/target/*.jar app.jar
+
+USER appuser
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
